@@ -95,28 +95,37 @@ def main():
     # RELAÇÃO DO ATRIBUTO PRODUCTION COM OS OUTROS
 
     # Atributo 'production' vs 'date'
-    sns.lineplot(x='date', y="production", data=train_data)
-    plt.show()
+    snsplot = sns.lineplot(x='date', y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/lineplot/production-date.png")
+    plt.close()
     # Nota-se que a produção tem picos por volta de outubro e vales por volta de março.
     # Além disso, nota-se uma tendência geral de crescimento na produção: os picos estão mais altos a cada ano.
 
     # Atributo 'production' vs 'age'
-    sns.lineplot(x='age', y="production", data=train_data)
-    plt.show()
+    snsplot = sns.lineplot(x='age', y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure()
+    snsplot.get_figure().savefig("img/lineplot/production-age.png")
+    plt.close()
     # Nota-se que há um pico de produção para árvores por volta dos 15 anos de idade.
     # Árvores com 16 ou mais anos possuem produção com tendência constante.
     # Árvores jovens (menos de 5 anos) possuem baixa produtividade, e essa produtividade cresce ao passar dos anos
 
     # Atributo 'production' vs 'harvest_month'
-    sns.lineplot(x='harvest_month', y="production", data=train_data)
-    plt.show()
+    snsplot = sns.lineplot(x='harvest_month', y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/lineplot/production-harvestmonth.png")
+    plt.close()
     # Neste gráfico, é bastante evidente o padrão que se "repete" ao passar dos anos.
     # Há um pico de produtividade bastante intenso no mês de outubro.
     # A produção é relativamente baixa (em média) de fevereiro a junho.
 
     # Atributo 'production' vs 'type'
-    sns.barplot(x='type', y='production', data=train_data)
-    plt.show()
+    snsplot = sns.barplot(x='type', y='production', data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/lineplot/production-type.png")
+    plt.close()
     # Esse gráfico apresenta a média de produtividade para os diferentes tipos de árvore.
     # Nota-se que as árvores de tipo 4 e 2 são relativamente mais produtivas que as outras.
     # As árvores de tipo 6 e 5 (as mais comuns) têm produtividade média.
@@ -124,8 +133,10 @@ def main():
     # As árvores de tipo 0 produzem muito pouco em comparação com as outras.
 
     # CDF da produção
-    sns.distplot(train_data["production"], hist_kws={'cumulative': True}, kde_kws={'cumulative': True})
-    plt.show()
+    snsplot = sns.distplot(train_data["production"], hist_kws={'cumulative': True}, kde_kws={'cumulative': True})
+    #plt.show()
+    snsplot.get_figure().savefig("img/distplot/production-dist.png")
+    plt.close()
     # A partir desse gráfico, pode-se notar que aproximadamente 90% dos dados de produção estão abaixo de 0.4,
     # e aproximadamente 80% estão abaixo de 0.25.
 
@@ -206,34 +217,46 @@ def main():
         field_index.append(i)
         prod_mean_by_field.append(train_data[train_data["field"] == i]["production"].mean())
         print("Field " + str(i) + ": " + str(train_data[train_data["field"] == i]["production"].mean()))
-    sns.barplot(x=field_index, y=prod_mean_by_field)
+    snsplot = sns.barplot(x=field_index, y=prod_mean_by_field)
     plt.xlabel("field")
     plt.ylabel("avg_production")
-    plt.show()
+    #plt.show()
+    snsplot.get_figure().savefig("img/barplot/field-avgproduction.png")
+    plt.close()
     # A partir desse gráfico, nota-se que os fields 12 e 14 (e 16) se destacam por ter uma média de produção maior
     # que os outros. Os fields 8 e 9 (e 5), por outro lado, destacam-se por terem média de produção muito inferior
     # aos demais.
 
-    sns.boxplot(x="field", y="production", data=train_data)
-    plt.show()
+    snsplot = sns.boxplot(x="field", y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/boxplot/field-production.png")
+    plt.close()
     # Esta é uma forma de visualizar a distribuição probabilística das produções por field. Neste gráfico, pode-se ver
     # que as ocorrências de produção alta são, em geral, consideradas outliers. A maior parte dos pontos se localiza na
     # região de 0.1 a 0.25 de produtividade.
 
-    sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([1, 2, 3, 4, 5, 6])])
-    plt.show()
+    snsplot = sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([1, 2, 3, 4, 5, 6])])
+    #plt.show()
+    snsplot.get_figure().savefig("img/boxplot/field-production-month-1-6.png")
+    plt.close()
     # A distribuição é totalmente deslocada para baixo no primeiro semestre do ano
 
-    sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([7, 8, 9, 10, 11, 12])])
-    plt.show()
+    snsplot = sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([7, 8, 9, 10, 11, 12])])
+    #plt.show()
+    snsplot.get_figure().savefig("img/boxplot/field-production-month-7-12.png")
+    plt.close()
     # No segundo semestre, é deslocada para cima
 
-    sns.boxplot(x="age", y="production", data=train_data)
-    plt.show()
+    snsplot = sns.boxplot(x="age", y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/boxplot/age-production.png")
+    plt.close()
     # Aqui é mostrada a distribuição da produção das plantas de acordo com a idade
 
-    sns.boxplot(x="harvest_month", y="production", data=train_data)
-    plt.show()
+    snsplot = sns.boxplot(x="harvest_month", y="production", data=train_data)
+    #plt.show()
+    snsplot.get_figure().savefig("img/boxplot/month-production.png")
+    plt.close()
 
     # O arquivo soil_data.csv introduz uma grande quantidade de atributos.
     # É necessário identificar se realmente são úteis.
@@ -242,71 +265,93 @@ def main():
 
     correlation = soil_data[
         ["BLDFIE_sl1", "BLDFIE_sl2", "BLDFIE_sl3", "BLDFIE_sl4", "BLDFIE_sl5", "BLDFIE_sl6", "BLDFIE_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/bldfie.png")
+    plt.close()
     # Os atributos BLDFIE têm alta correlação entre o sl1 e sl2, e entre os sl4 a sl7. O sl3 não tem muita correlação
     # com os outros. Pode-se reduzir esses dados apenas para as colunas BLDFIE_sl1, BLDFIE_sl3 e BLDFIE_sl7.
 
     correlation = soil_data[
         ["CECSOL_sl1", "CECSOL_sl2", "CECSOL_sl3", "CECSOL_sl4", "CECSOL_sl5", "CECSOL_sl6", "CECSOL_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/cecsol.png")
+    plt.close()
     # Todos os atributos CECSOL têm alta correlação entre si. O CECSOL_sl4 é uma boa escolha (ponto central)
 
     correlation = soil_data[
         ["CLYPPT_sl1", "CLYPPT_sl2", "CLYPPT_sl3", "CLYPPT_sl4", "CLYPPT_sl5", "CLYPPT_sl6", "CLYPPT_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/clyppt.png")
+    plt.close()
     # Os atributos CLYPPT parecem que têm uma divisão mais bipartida. Os sl1 até sl4 têm alta correlação,
     # e os sl4 até sl7 também. Escolhe-se os representantes CLYPPT_sl2 e CLYPPT_sl6.
 
     correlation = soil_data[
         ["CRFVOL_sl1", "CRFVOL_sl2", "CRFVOL_sl3", "CRFVOL_sl4", "CRFVOL_sl5", "CRFVOL_sl6", "CRFVOL_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/crfvol.png")
+    plt.close()
     # Todos os atributos CRFVOL têm alta correlação entre si. O CRFVOL_sl4 é uma boa escolha (ponto central)
 
     correlation = soil_data[["OCSTHA_sd1", "OCSTHA_sd2", "OCSTHA_sd3", "OCSTHA_sd4", "OCSTHA_sd5", "OCSTHA_sd6"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/ocstha.png")
+    plt.close()
     # Todos os atributos OCSTHA têm alta correlação entre si (exceto talvez o sd1, que tem correlação por volta de
     # 0.6). Mesmo assim, deve ser possível escolher apenas o OCSTHA_sd4.
 
     correlation = soil_data[
         ["ORCDRC_sl1", "ORCDRC_sl2", "ORCDRC_sl3", "ORCDRC_sl4", "ORCDRC_sl5", "ORCDRC_sl6", "ORCDRC_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/orcdrc.png")
+    plt.close()
     # Verifica-se correlação entre os sl4 a sl7, e entre o sl2 e sl3. Reduz-se os dados para ORCDRC_sl1, ORCDRC_sl3 e
     # ORCDRC_sl6
 
     correlation = soil_data[
         ["PHIHOX_sl1", "PHIHOX_sl2", "PHIHOX_sl3", "PHIHOX_sl4", "PHIHOX_sl5", "PHIHOX_sl6", "PHIHOX_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/phihox.png")
+    plt.close()
     # Alta correlação no geral. Escolhe-se apenas o PHIHOX_sl4.
 
     correlation = soil_data[
         ["PHIKCL_sl1", "PHIKCL_sl2", "PHIKCL_sl3", "PHIKCL_sl4", "PHIKCL_sl5", "PHIKCL_sl6", "PHIKCL_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/phikcl.png")
+    plt.close()
     # Alta correlação no geral. Escolhe-se apenas o PHIKCL_sl4.
 
     correlation = soil_data[
         ["SLTPPT_sl1", "SLTPPT_sl2", "SLTPPT_sl3", "SLTPPT_sl4", "SLTPPT_sl5", "SLTPPT_sl6", "SLTPPT_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/sltppt.png")
+    plt.close()
     # Correlação altíssima entre todos os atributos. Escolhe-se apenas o SLTPPT_sl4.
 
     correlation = soil_data[
         ["SNDPPT_sl1", "SNDPPT_sl2", "SNDPPT_sl3", "SNDPPT_sl4", "SNDPPT_sl5", "SNDPPT_sl6", "SNDPPT_sl7"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/sndppt.png")
+    plt.close()
     # Correlação altíssima entre todos os atributos. Escolhe-se apenas o SNDPPT_sl4.
 
     # O atributo BDRICM_BDRICM_M é igual para todos os fields. Logo, não tem variação para ser calculada a correlação.
     correlation = soil_data[["BDRLOG_BDRLOG_M", "BDTICM_BDTICM_M"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/soil/bdrlog-bdticm.png")
+    plt.close()
     # Esses atributos não têm correlação.
 
     # Como esses são dados estáticos, deve-se compará-los à média da produção de seus respectivos fields, para ver se
@@ -318,8 +363,11 @@ def main():
         ["BDRLOG_BDRLOG_M", "BDTICM_BDTICM_M", "BLDFIE_sl1", "BLDFIE_sl3", "BLDFIE_sl7", "CECSOL_sl4", "CLYPPT_sl2",
          "CLYPPT_sl6", "CRFVOL_sl4", "OCSTHA_sd4", "ORCDRC_sl1", "ORCDRC_sl3", "ORCDRC_sl6", "PHIHOX_sl4", "PHIKCL_sl4",
          "SLTPPT_sl4", "SNDPPT_sl4", "production_mean"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().set_size_inches(15,15)
+    snsplot.get_figure().savefig("img/heatmap/soil/final.png")
+    plt.close()
     # Mesmo reduzindo bastante o número de atributos, esse gráfico ainda tem uma visualização bem prejudicada.
     # Não é possível observar muita correlação entre os dados de solo diferentes (com exceção dos OCSTHA e os ORCDRC).
     # Alguns pontos de correlação negativa podem ser observados.
@@ -340,8 +388,10 @@ def main():
 
     # --- Cálculo da correlação entre atributos de umidade ---
     correlation = full_dataset[["Soilwater_L1", "Soilwater_L2", "Soilwater_L3", "Soilwater_L4", "dewpoint", "production"]].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().savefig("img/heatmap/full/soilwater-dewpoint-production.png")
+    plt.close()
     # Todos os Soilwater e o dewpoint têm bastante correlação entre si. Pode-se escolher o Soilwater_L2 como o
     # representante deles. Aliás, o Soilwater_L4 tem ligeiramente menos correlação.
     # Parece que possuem um efeito considerável na produção (mas não linear).
@@ -351,8 +401,11 @@ def main():
                            "Soilwater_L4", "production"]
 
     correlation = full_dataset[features_to_compute].corr()
-    sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    plt.show()
+    snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
+    #plt.show()
+    snsplot.get_figure().set_size_inches(8, 8)
+    snsplot.get_figure().savefig("img/heatmap/full/final.png")
+    plt.close()
 
     # TODOS OS ATRIBUTOS (PARA COPIAR E COLAR)
     # Entradas de treinamento:
