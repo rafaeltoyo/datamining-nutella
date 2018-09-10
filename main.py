@@ -67,12 +67,12 @@ def tatica_2():
     sns.lineplot(x='month', y="production", data=df_full, palette="Blues", linewidth=2.5)
     plt.show()
 
-
-sns.barplot(x='field', y="production", data=df_full)
-plt.show()
-sns.barplot(x='type', y="production", data=df_full)
-plt.show()
-sns.barplot(x='age', y="production", data=df_full)
-plt.show()
+def tatica_3():
+    sns.barplot(x='field', y="production", data=df_full)
+    plt.show()
+    sns.barplot(x='type', y="production", data=df_full)
+    plt.show()
+    sns.barplot(x='age', y="production", data=df_full)
+    plt.show()
 
 # ======================================================================================================================

@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 
 from matplotlib import pyplot as plt
+from sklearn.manifold import TSNE
 
 # ==============================================================================
 
@@ -72,6 +73,46 @@ def generate_monolith_train(train_data, soil_data, field_data):
 # ==============================================================================
 
 def main():
+    # Carrega os dados
+    train_data = pd.read_csv(DATASET_DIR + TRAIN_FILENAME)
+    test_data = pd.read_csv(DATASET_DIR + TEST_FILENAME)
+    soil_data = pd.read_csv(DATASET_DIR + SOIL_FILENAME)
+
+    field_data = []
+    for filename in FIELD_FILENAMES:
+        field_data.append(pd.read_csv(DATASET_DIR + filename))
+
+    # Corrige o campo de mês e ano no train_data e no test_data
+    generate_dates(train_data, "harvest_year", "harvest_month")
+    generate_dates(test_data, "harvest_year", "harvest_month")
+
+    # Corrige o campo de mês e ano nos field_data[...]
+    for n_field_data in field_data:
+        generate_dates(n_field_data, "year", "month")
+        generate_acc_precipitation(n_field_data)
+
+    print("--- ANÁLISE DOS DADOS DE TREINAMENTO E DE TESTE ---\n")
+    """
+    Faz join de todos os dados (retirar o comentário para gerar novamente)
+    - age
+    - temperature
+    - windspeed
+    - Precipitation
+    - acc_precipitation
+    - Soilwater_L2
+    - Soilwater_L4
+    - production
+    """
+    #generate_monolith_train(train_data, soil_data, field_data)
+    full_dataset = pd.read_csv("monolith.csv")
+    X_embedded = TSNE(n_components=2).fit_transform(full_dataset)
+    X_embedded.shape()
+
+    #features_to_compute = ["temperature", "windspeed", "Precipitation", "acc_precipitation", "production"]
+
+
+
+def main2():
     # Carrega os dados
     train_data = pd.read_csv(DATASET_DIR + TRAIN_FILENAME)
     test_data = pd.read_csv(DATASET_DIR + TEST_FILENAME)
@@ -403,7 +444,7 @@ def main():
     correlation = full_dataset[features_to_compute].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
     #plt.show()
-    snsplot.get_figure().set_size_inches(8, 8)
+    snsplot.get_figure().set_size_inches(11, 13)
     snsplot.get_figure().savefig("img/heatmap/full/final.png")
     plt.close()
 
@@ -427,6 +468,63 @@ def main():
     # "PHIKCL_sl1", "PHIKCL_sl2", "PHIKCL_sl3", "PHIKCL_sl4", "PHIKCL_sl5", "PHIKCL_sl6", "PHIKCL_sl7"
     # "SLTPPT_sl1", "SLTPPT_sl2", "SLTPPT_sl3", "SLTPPT_sl4", "SLTPPT_sl5", "SLTPPT_sl6", "SLTPPT_sl7"
     # "SNDPPT_sl1", "SNDPPT_sl2", "SNDPPT_sl3", "SNDPPT_sl4", "SNDPPT_sl5", "SNDPPT_sl6", "SNDPPT_sl7"
+
+    snsplot = sns.countplot(x="type", data=train_data)
+    snsplot.get_figure().savefig("img/barplot/count-train-type")
+    plt.close()
+
+    snsplot = sns.countplot(x="type", data=test_data)
+    snsplot.get_figure().savefig("img/barplot/count-test-type")
+    plt.close()
+
+    # plt.show()
+    snsplot.get_figure().set_size_inches(25, 8)
+    snsplot.get_figure().savefig("img/boxplot/type-production-date-3.png")
+    plt.close()
+
+    snsplot = sns.boxplot(x="age", y="production", hue="type", data=train_data)
+    # plt.show()
+    snsplot.get_figure().set_size_inches(25, 8)
+    snsplot.get_figure().savefig("img/boxplot/type-production-age.png")
+    plt.close()
+
+    snsplot = sns.boxplot(x="harvest_month", y="production", hue="type", data=train_data)
+    # plt.show()
+    snsplot.get_figure().set_size_inches(25, 8)
+    snsplot.get_figure().savefig("img/boxplot/type-production-month.png")
+    plt.close()
+
+    snsplot = sns.boxplot(x="field", y="production", hue="type", data=train_data)
+    # plt.show()
+    snsplot.get_figure().set_size_inches(25, 8)
+    snsplot.get_figure().savefig("img/boxplot/type-production-field.png")
+    plt.close()
+
+    # Outros atributos x mes
+
+    # features_to_compute = ["temperature", "windspeed", "Precipitation", "acc_precipitation", "production"]
+    # correlation = full_dataset[features_to_compute].corr()
+    # snsplot = sns.pairplot(full_dataset, vars=features_to_compute)
+    # plt.show()
+    # for i in range(0,7):
+    #    snsplot = sns.pairplot(full_dataset[full_dataset['type'].isin(["%d" % i])], vars=features_to_compute, diag_kind="kde", kind="reg")
+    #    plt.show()
+    # snsplot.get_figure().set_size_inches(11, 13)
+    # snsplot.get_figure().savefig("img/heatmap/full/final.png")
+    # plt.close()
+
+    snsplot = sns.lineplot(x='month', y="temperature", data=full_dataset)
+    snsplot.get_figure().savefig("img/lineplot/month-temperature.png")
+    plt.close()
+    snsplot = sns.lineplot(x='month', y="windspeed", data=full_dataset)
+    snsplot.get_figure().savefig("img/lineplot/month-windspeed.png")
+    plt.close()
+    snsplot = sns.lineplot(x='month', y="Precipitation", data=full_dataset)
+    snsplot.get_figure().savefig("img/lineplot/month-precipitation.png")
+    plt.close()
+    snsplot = sns.lineplot(x='month', y="acc_precipitation", data=full_dataset)
+    snsplot.get_figure().savefig("img/lineplot/month-acc_precipitation.png")
+    plt.close()
 
 if __name__ == "__main__":
     main()

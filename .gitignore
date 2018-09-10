@@ -74,5 +74,6 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
+analise/img/*
 
 # End of https://www.gitignore.io/api/pycharm
