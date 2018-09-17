@@ -7,6 +7,9 @@
 import pandas as pd
 import seaborn as sns
 
+import numpy as np
+
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
 from sklearn.manifold import TSNE
 
@@ -48,7 +51,7 @@ def generate_acc_precipitation(dataframe):
 
 # ==============================================================================
 
-def generate_monolith_train(train_data, soil_data, field_data):
+def generate_monolith_train(train_data, soil_data, field_data, test=False):
     # Coloca o número do field em uma coluna em cada data frame
     for i in range(len(field_data)):
         field_data[i]["field"] = i
@@ -66,7 +69,10 @@ def generate_monolith_train(train_data, soil_data, field_data):
     full_data.set_index("Id", inplace=True)
     full_data.sort_values(by=["Id"], inplace=True)
 
-    full_data.to_csv("monolith.csv", index=True)
+    if test:
+        full_data.to_csv("monolith_test.csv", index=True)
+    else:
+        full_data.to_csv("monolith.csv", index=True)
 
     return full_data
 
@@ -104,13 +110,42 @@ def main():
     - production
     """
     #generate_monolith_train(train_data, soil_data, field_data)
+    #generate_monolith_train(test_data, soil_data, field_data, test=True)
     full_dataset = pd.read_csv("monolith.csv")
-    X_embedded = TSNE(n_components=2).fit_transform(full_dataset)
-    X_embedded.shape()
+
+    #X_embedded = TSNE(n_components=2).fit_transform(full_dataset)
+    #X_embedded.shape()
 
     #features_to_compute = ["temperature", "windspeed", "Precipitation", "acc_precipitation", "production"]
+    #quero = full_dataset[full_dataset['type'].isin(['4'])]
 
+    # Condicoes climaticas
+    #full_dataset['month'] = pd.Categorical(full_dataset['month'])
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+    #ax.scatter(full_dataset['temperature'], full_dataset['acc_precipitation'], full_dataset['windspeed'], c=full_dataset['month'].cat.codes, cmap="Set2_r")
+    #ax.view_init(30, 185)
+    #plt.legend()
+    #plt.show()
 
+    # Tentar algo com producao
+    quero = full_dataset[full_dataset['type'].isin(['0', '1', '2', '3', '4', '5', '6'])]
+    quero['type'] = pd.Categorical(quero['type'])
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(quero['age'], quero['year'], quero['field'], c=quero['type'].cat.codes, cmap="Set1_r")
+    ax.view_init(30, 185)
+    plt.legend()
+    plt.show()
+
+    #snsplot = sns.scatterplot(x="temperature", y="acc_precipitation", hue="month", data=full_dataset)
+    #snsplot = sns.scatterplot(x="temperature", y="windspeed", hue="month", data=full_dataset)
+    #snsplot = sns.scatterplot(x="acc_precipitation", y="windspeed", hue="month", data=full_dataset)
+    #plt.show()
+
+    #snsplot = sns.lmplot(x="temperature", y="windspeed", hue="month", fit_reg=False, data=full_dataset)
+    #snsplot.get_figure().savefig("img/scatterplot/dummy.png")
+    #plt.close()
 
 def main2():
     # Carrega os dados
