@@ -11,7 +11,10 @@ import numpy as np
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
-from sklearn.manifold import TSNE
+import sklearn
+import sklearn.cluster
+from scipy.spatial.distance import cdist
+from sklearn.cluster import KMeans,DBSCAN
 
 # ==============================================================================
 
@@ -22,6 +25,7 @@ TEST_FILENAME = "test.csv"
 SOIL_FILENAME = "soil_data.csv"
 
 FIELD_FILENAMES = [("field-%d.csv" % i) for i in range(28)]
+
 
 # ==============================================================================
 
@@ -37,6 +41,7 @@ def load_dataset():
 
     return train_data, test_data, soil_data, field_data
 
+
 # ==============================================================================
 
 def generate_dates(dataframe, year_str, month_str):
@@ -44,10 +49,12 @@ def generate_dates(dataframe, year_str, month_str):
         (dataframe[year_str] * 10000 + dataframe[month_str] * 100 + 1).apply(str),
         format="%Y%m%d")
 
+
 # ==============================================================================
 
 def generate_acc_precipitation(dataframe):
     dataframe["acc_precipitation"] = dataframe["Precipitation"].rolling(4, min_periods=1).mean()
+
 
 # ==============================================================================
 
@@ -59,7 +66,7 @@ def generate_monolith_train(train_data, soil_data, field_data, test=False):
 
     # Cola todos os datasets
     join_field = train_data.merge(full_field_data, how="inner", left_on=["field", "date"], right_on=["field", "date"])
-    full_data = join_field#.merge(soil_data, how="inner", left_on=["field"], right_on=["field"])
+    full_data = join_field  # .merge(soil_data, how="inner", left_on=["field"], right_on=["field"])
 
     # Remove atributos redundantes
     full_data.drop("harvest_year", axis=1, inplace=True)
@@ -75,6 +82,7 @@ def generate_monolith_train(train_data, soil_data, field_data, test=False):
         full_data.to_csv("monolith.csv", index=True)
 
     return full_data
+
 
 # ==============================================================================
 
@@ -107,45 +115,194 @@ def main():
     - acc_precipitation
     - Soilwater_L2
     - Soilwater_L4
-    - production
+    - production (test.csv nao tem isso)
     """
-    #generate_monolith_train(train_data, soil_data, field_data)
-    #generate_monolith_train(test_data, soil_data, field_data, test=True)
+    # generate_monolith_train(train_data, soil_data, field_data)
     full_dataset = pd.read_csv("monolith.csv")
+    # generate_monolith_train(test_data, soil_data, field_data, test=True)
+    # full_test_dataset = pd.read_csv("monolith_test.csv")
 
-    #X_embedded = TSNE(n_components=2).fit_transform(full_dataset)
-    #X_embedded.shape()
+    # features_to_compute = ["temperature", "windspeed", "Precipitation", "acc_precipitation", "production"]
+    # quero = full_dataset[full_dataset['type'].isin(['4'])]
 
-    #features_to_compute = ["temperature", "windspeed", "Precipitation", "acc_precipitation", "production"]
-    #quero = full_dataset[full_dataset['type'].isin(['4'])]
+    cluster_1 = False
+    cluster_2 = True
 
-    # Condicoes climaticas
-    #full_dataset['month'] = pd.Categorical(full_dataset['month'])
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111, projection='3d')
-    #ax.scatter(full_dataset['temperature'], full_dataset['acc_precipitation'], full_dataset['windspeed'], c=full_dataset['month'].cat.codes, cmap="Set2_r")
-    #ax.view_init(30, 185)
-    #plt.legend()
-    #plt.show()
+    # ================================================================================================================ #
+    if cluster_1:
+        """
+        Condições climáticas:
+            Dados agregados para tentar gerar clusters
+            - temperature
+            - acc_precipitation
+            - windspeed
+            Classificação objetivada: 
+            - month
+        """
 
-    # Tentar algo com producao
-    quero = full_dataset[full_dataset['type'].isin(['0', '1', '2', '3', '4', '5', '6'])]
-    quero['type'] = pd.Categorical(quero['type'])
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(quero['age'], quero['year'], quero['field'], c=quero['type'].cat.codes, cmap="Set1_r")
-    ax.view_init(30, 185)
-    plt.legend()
-    plt.show()
+        # snsplot = sns.scatterplot(x="temperature", y="acc_precipitation", hue="month", data=full_dataset)
+        # snsplot = sns.scatterplot(x="temperature", y="windspeed", hue="month", data=full_dataset)
+        # snsplot = sns.scatterplot(x="acc_precipitation", y="windspeed", hue="month", data=full_dataset)
+        # plt.show()
 
-    #snsplot = sns.scatterplot(x="temperature", y="acc_precipitation", hue="month", data=full_dataset)
-    #snsplot = sns.scatterplot(x="temperature", y="windspeed", hue="month", data=full_dataset)
-    #snsplot = sns.scatterplot(x="acc_precipitation", y="windspeed", hue="month", data=full_dataset)
-    #plt.show()
+        # snsplot = sns.lmplot(x="temperature", y="windspeed", hue="month", fit_reg=False, data=full_dataset)
+        # snsplot.get_figure().savefig("img/scatterplot/dummy.png")
+        # plt.close()
 
-    #snsplot = sns.lmplot(x="temperature", y="windspeed", hue="month", fit_reg=False, data=full_dataset)
-    #snsplot.get_figure().savefig("img/scatterplot/dummy.png")
-    #plt.close()
+        # Trasformar o atributo 'month' em categórico (possivelmente está como contínuo)
+        full_dataset['cat_month'] = pd.Categorical(full_dataset['month'])
+
+        # Gerar Figura para plot 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plotar pontos
+        ax.scatter(full_dataset['temperature'], full_dataset['acc_precipitation'], full_dataset['windspeed'],
+                   c=full_dataset['cat_month'].cat.codes, cmap="viridis")
+        ax.view_init(30, 185)
+        plt.show()
+
+        """
+        Realizar o agrupamento dos dados de condições climáticas.
+        Como observado no gráfico anterior, clusters por semestre ou trimestre pode ser uma alternativa (2-3 clusters)
+        Táticas:
+            K-means
+            Agglomerative Clustering
+        """
+
+        x1 = np.array(full_dataset['temperature'])
+        x2 = np.array(full_dataset['acc_precipitation'], )
+        x3 = np.array(full_dataset['windspeed'])
+
+        # create new plot and data
+        plt.plot()
+        X = np.array(list(zip(x1, x2, x3))).reshape(len(x1), 3)
+
+        # k means determine k
+        distortions = []
+        K = range(1, 10)
+        for k in K:
+            kmeanModel = KMeans(n_clusters=k).fit(X)
+            kmeanModel.fit(X)
+            distortions.append(sum(np.min(cdist(X, kmeanModel.cluster_centers_, 'euclidean'), axis=1)) / X.shape[0])
+
+        # Plot the elbow
+        plt.plot(K, distortions, 'bx-')
+        plt.xlabel('k')
+        plt.ylabel('Distortion')
+        plt.title('The Elbow Method showing the optimal k')
+        plt.show()
+
+        weather_data = full_dataset[["temperature", "acc_precipitation", "windspeed"]]
+        # K-means
+        kmeans = KMeans(n_clusters=3, init="random")
+        kmeans.fit(weather_data)
+        y_kmeans = kmeans.predict(weather_data)
+
+        # Agglomerative Clustering
+        sarue = sklearn.cluster.AgglomerativeClustering(n_clusters=3, linkage="ward")
+        y_clusters = sarue.fit_predict(weather_data)
+
+        # Gerar Figura para plot 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # Plotar pontos
+        ax.scatter(full_dataset["temperature"], full_dataset["acc_precipitation"], full_dataset["windspeed"],
+                   c=y_kmeans, cmap="viridis")
+        ax.view_init(30, 185)
+        plt.show()
+
+        # Gerar Figura para plot 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # Plotar pontos
+        ax.scatter(full_dataset["temperature"], full_dataset["acc_precipitation"], full_dataset["windspeed"],
+                   c=y_clusters, cmap="viridis")
+        ax.view_init(30, 185)
+        plt.show()
+
+    # ================================================================================================================ #
+    if cluster_2:
+        """
+        Produções por idade e tipo ao longo dos anos:
+            Dados para tentar gerar clusters
+            - age
+            - timestamp (ano + mes)
+            - field
+            Classificação objetivada: 
+            - type
+        """
+
+        # Tentar algo com producao
+        quero = full_dataset[full_dataset['type'].isin(['0', '1', '2', '3', '4', '5', '6'])]
+        quero['type'] = pd.Categorical(quero['type'])
+        quero['timestamp'] = quero['year'] * 12 + quero['month']
+        quero = quero[['age', 'timestamp', 'field', 'type']]
+
+        # Gerar Figura para plot 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plotar pontos
+        ax.scatter(quero['age'], quero['timestamp'], quero['type'], c=quero['type'].cat.codes, cmap="viridis")
+        ax.view_init(30, 185)
+        plt.show()
+
+        """
+        O gráfico apresenta 'linhas' de possíveis levas de árvores plantadas juntas e mantidas ao longo dos anos.
+        """
+
+        data = quero[['age', 'timestamp', 'type']]
+
+        ns = 10
+        nbrs = sklearn.neighbors.NearestNeighbors(n_neighbors=ns).fit(data)
+        distances, indices = nbrs.kneighbors(data)
+        distanceDec = sorted(distances[:, ns - 1], reverse=True)
+        plt.plot(indices[:, 0], distanceDec)
+        plt.show()
+        # ns = 5 -> epsilon = 1.2 - 1.5
+        epsilon = 2
+
+        """
+        DB scan
+            n = 10
+            ep = 1.5
+        """
+
+        # Gerar Figura para plot 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        db = DBSCAN(eps=epsilon, min_samples=ns)
+
+        # Fit and get labels
+        db.fit_predict(data)
+        data['labels'] = db.labels_
+        n_clusters = len(set(db.labels_)) - (1 if -1 in db.labels_ else 0)
+
+        # Plot results
+        cols = sns.color_palette("Set2", n_colors=n_clusters, desat=.5)
+        cl = [cols[i] for i in db.labels_]
+        ax.scatter(data['age'], data['timestamp'], data['type'], c=cl, alpha=0.5)
+        ax.set_title('Number of components: ' + str(n_clusters))
+        ax.set_xlabel('Age')
+        ax.set_ylabel('Timestamp (year * 12 + month)')
+        ax.set_zlabel('Field')
+
+        # Show aggregated volume and interest at each neighborhood
+        """
+        x = data.groupby('labels')[['Age', 'Timestamp', 'Field']].mean().sort_values(['response'])
+        x = pd.concat([x, data['labels'].value_counts()], axis=1).sort_values(['response'])
+        cols = sns.color_palette("RdBu_r", n_clusters)[::-1]
+        for i in range(n_clusters):
+            props = dict(boxstyle='round', facecolor=cols[i], alpha=0.8)
+            ax.text(x.longitude.values[i], x.latitude.values[i],
+                        str(np.array(np.round(x.response.values, 2), '|S8')[i]) + '\n' + str(
+                            np.array(x['labels'].values, '|S8')[i]),
+                        fontsize=9, verticalalignment='center', horizontalalignment='center', bbox=props)
+        """
+        plt.show()
+
 
 def main2():
     # Carrega os dados
@@ -172,7 +329,7 @@ def main2():
 
     # Atributo 'production' vs 'date'
     snsplot = sns.lineplot(x='date', y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/lineplot/production-date.png")
     plt.close()
     # Nota-se que a produção tem picos por volta de outubro e vales por volta de março.
@@ -180,7 +337,7 @@ def main2():
 
     # Atributo 'production' vs 'age'
     snsplot = sns.lineplot(x='age', y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure()
     snsplot.get_figure().savefig("img/lineplot/production-age.png")
     plt.close()
@@ -190,7 +347,7 @@ def main2():
 
     # Atributo 'production' vs 'harvest_month'
     snsplot = sns.lineplot(x='harvest_month', y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/lineplot/production-harvestmonth.png")
     plt.close()
     # Neste gráfico, é bastante evidente o padrão que se "repete" ao passar dos anos.
@@ -199,7 +356,7 @@ def main2():
 
     # Atributo 'production' vs 'type'
     snsplot = sns.barplot(x='type', y='production', data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/lineplot/production-type.png")
     plt.close()
     # Esse gráfico apresenta a média de produtividade para os diferentes tipos de árvore.
@@ -210,7 +367,7 @@ def main2():
 
     # CDF da produção
     snsplot = sns.distplot(train_data["production"], hist_kws={'cumulative': True}, kde_kws={'cumulative': True})
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/distplot/production-dist.png")
     plt.close()
     # A partir desse gráfico, pode-se notar que aproximadamente 90% dos dados de produção estão abaixo de 0.4,
@@ -296,7 +453,7 @@ def main2():
     snsplot = sns.barplot(x=field_index, y=prod_mean_by_field)
     plt.xlabel("field")
     plt.ylabel("avg_production")
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/barplot/field-avgproduction.png")
     plt.close()
     # A partir desse gráfico, nota-se que os fields 12 e 14 (e 16) se destacam por ter uma média de produção maior
@@ -304,33 +461,35 @@ def main2():
     # aos demais.
 
     snsplot = sns.boxplot(x="field", y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/boxplot/field-production.png")
     plt.close()
     # Esta é uma forma de visualizar a distribuição probabilística das produções por field. Neste gráfico, pode-se ver
     # que as ocorrências de produção alta são, em geral, consideradas outliers. A maior parte dos pontos se localiza na
     # região de 0.1 a 0.25 de produtividade.
 
-    snsplot = sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([1, 2, 3, 4, 5, 6])])
-    #plt.show()
+    snsplot = sns.boxplot(x="field", y="production",
+                          data=train_data[train_data["harvest_month"].isin([1, 2, 3, 4, 5, 6])])
+    # plt.show()
     snsplot.get_figure().savefig("img/boxplot/field-production-month-1-6.png")
     plt.close()
     # A distribuição é totalmente deslocada para baixo no primeiro semestre do ano
 
-    snsplot = sns.boxplot(x="field", y="production", data=train_data[train_data["harvest_month"].isin([7, 8, 9, 10, 11, 12])])
-    #plt.show()
+    snsplot = sns.boxplot(x="field", y="production",
+                          data=train_data[train_data["harvest_month"].isin([7, 8, 9, 10, 11, 12])])
+    # plt.show()
     snsplot.get_figure().savefig("img/boxplot/field-production-month-7-12.png")
     plt.close()
     # No segundo semestre, é deslocada para cima
 
     snsplot = sns.boxplot(x="age", y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/boxplot/age-production.png")
     plt.close()
     # Aqui é mostrada a distribuição da produção das plantas de acordo com a idade
 
     snsplot = sns.boxplot(x="harvest_month", y="production", data=train_data)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/boxplot/month-production.png")
     plt.close()
 
@@ -342,7 +501,7 @@ def main2():
     correlation = soil_data[
         ["BLDFIE_sl1", "BLDFIE_sl2", "BLDFIE_sl3", "BLDFIE_sl4", "BLDFIE_sl5", "BLDFIE_sl6", "BLDFIE_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/bldfie.png")
     plt.close()
     # Os atributos BLDFIE têm alta correlação entre o sl1 e sl2, e entre os sl4 a sl7. O sl3 não tem muita correlação
@@ -351,7 +510,7 @@ def main2():
     correlation = soil_data[
         ["CECSOL_sl1", "CECSOL_sl2", "CECSOL_sl3", "CECSOL_sl4", "CECSOL_sl5", "CECSOL_sl6", "CECSOL_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/cecsol.png")
     plt.close()
     # Todos os atributos CECSOL têm alta correlação entre si. O CECSOL_sl4 é uma boa escolha (ponto central)
@@ -359,7 +518,7 @@ def main2():
     correlation = soil_data[
         ["CLYPPT_sl1", "CLYPPT_sl2", "CLYPPT_sl3", "CLYPPT_sl4", "CLYPPT_sl5", "CLYPPT_sl6", "CLYPPT_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/clyppt.png")
     plt.close()
     # Os atributos CLYPPT parecem que têm uma divisão mais bipartida. Os sl1 até sl4 têm alta correlação,
@@ -368,14 +527,14 @@ def main2():
     correlation = soil_data[
         ["CRFVOL_sl1", "CRFVOL_sl2", "CRFVOL_sl3", "CRFVOL_sl4", "CRFVOL_sl5", "CRFVOL_sl6", "CRFVOL_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/crfvol.png")
     plt.close()
     # Todos os atributos CRFVOL têm alta correlação entre si. O CRFVOL_sl4 é uma boa escolha (ponto central)
 
     correlation = soil_data[["OCSTHA_sd1", "OCSTHA_sd2", "OCSTHA_sd3", "OCSTHA_sd4", "OCSTHA_sd5", "OCSTHA_sd6"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/ocstha.png")
     plt.close()
     # Todos os atributos OCSTHA têm alta correlação entre si (exceto talvez o sd1, que tem correlação por volta de
@@ -384,7 +543,7 @@ def main2():
     correlation = soil_data[
         ["ORCDRC_sl1", "ORCDRC_sl2", "ORCDRC_sl3", "ORCDRC_sl4", "ORCDRC_sl5", "ORCDRC_sl6", "ORCDRC_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/orcdrc.png")
     plt.close()
     # Verifica-se correlação entre os sl4 a sl7, e entre o sl2 e sl3. Reduz-se os dados para ORCDRC_sl1, ORCDRC_sl3 e
@@ -393,7 +552,7 @@ def main2():
     correlation = soil_data[
         ["PHIHOX_sl1", "PHIHOX_sl2", "PHIHOX_sl3", "PHIHOX_sl4", "PHIHOX_sl5", "PHIHOX_sl6", "PHIHOX_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/phihox.png")
     plt.close()
     # Alta correlação no geral. Escolhe-se apenas o PHIHOX_sl4.
@@ -401,7 +560,7 @@ def main2():
     correlation = soil_data[
         ["PHIKCL_sl1", "PHIKCL_sl2", "PHIKCL_sl3", "PHIKCL_sl4", "PHIKCL_sl5", "PHIKCL_sl6", "PHIKCL_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/phikcl.png")
     plt.close()
     # Alta correlação no geral. Escolhe-se apenas o PHIKCL_sl4.
@@ -409,7 +568,7 @@ def main2():
     correlation = soil_data[
         ["SLTPPT_sl1", "SLTPPT_sl2", "SLTPPT_sl3", "SLTPPT_sl4", "SLTPPT_sl5", "SLTPPT_sl6", "SLTPPT_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/sltppt.png")
     plt.close()
     # Correlação altíssima entre todos os atributos. Escolhe-se apenas o SLTPPT_sl4.
@@ -417,7 +576,7 @@ def main2():
     correlation = soil_data[
         ["SNDPPT_sl1", "SNDPPT_sl2", "SNDPPT_sl3", "SNDPPT_sl4", "SNDPPT_sl5", "SNDPPT_sl6", "SNDPPT_sl7"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/sndppt.png")
     plt.close()
     # Correlação altíssima entre todos os atributos. Escolhe-se apenas o SNDPPT_sl4.
@@ -425,7 +584,7 @@ def main2():
     # O atributo BDRICM_BDRICM_M é igual para todos os fields. Logo, não tem variação para ser calculada a correlação.
     correlation = soil_data[["BDRLOG_BDRLOG_M", "BDTICM_BDTICM_M"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/soil/bdrlog-bdticm.png")
     plt.close()
     # Esses atributos não têm correlação.
@@ -440,8 +599,8 @@ def main2():
          "CLYPPT_sl6", "CRFVOL_sl4", "OCSTHA_sd4", "ORCDRC_sl1", "ORCDRC_sl3", "ORCDRC_sl6", "PHIHOX_sl4", "PHIKCL_sl4",
          "SLTPPT_sl4", "SNDPPT_sl4", "production_mean"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
-    snsplot.get_figure().set_size_inches(15,15)
+    # plt.show()
+    snsplot.get_figure().set_size_inches(15, 15)
     snsplot.get_figure().savefig("img/heatmap/soil/final.png")
     plt.close()
     # Mesmo reduzindo bastante o número de atributos, esse gráfico ainda tem uma visualização bem prejudicada.
@@ -463,9 +622,10 @@ def main2():
     full_dataset = pd.read_csv("monolith.csv")
 
     # --- Cálculo da correlação entre atributos de umidade ---
-    correlation = full_dataset[["Soilwater_L1", "Soilwater_L2", "Soilwater_L3", "Soilwater_L4", "dewpoint", "production"]].corr()
+    correlation = full_dataset[
+        ["Soilwater_L1", "Soilwater_L2", "Soilwater_L3", "Soilwater_L4", "dewpoint", "production"]].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().savefig("img/heatmap/full/soilwater-dewpoint-production.png")
     plt.close()
     # Todos os Soilwater e o dewpoint têm bastante correlação entre si. Pode-se escolher o Soilwater_L2 como o
@@ -478,7 +638,7 @@ def main2():
 
     correlation = full_dataset[features_to_compute].corr()
     snsplot = sns.heatmap(correlation, annot=True, linewidths=.5, cmap="Blues", vmax=1.0, vmin=-1.0)
-    #plt.show()
+    # plt.show()
     snsplot.get_figure().set_size_inches(11, 13)
     snsplot.get_figure().savefig("img/heatmap/full/final.png")
     plt.close()
@@ -560,6 +720,7 @@ def main2():
     snsplot = sns.lineplot(x='month', y="acc_precipitation", data=full_dataset)
     snsplot.get_figure().savefig("img/lineplot/month-acc_precipitation.png")
     plt.close()
+
 
 if __name__ == "__main__":
     main()
